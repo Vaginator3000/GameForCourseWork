@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000">
+
+    <FrameLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageButton
+            android:id="@+id/btnMenu"
+            android:layout_width="@dimen/btn_size"
+            android:layout_height="@dimen/btn_size"
+            android:layout_gravity="end"
+            android:layout_margin="4dp"
+            android:background="@mipmap/ic_menu"
+            android:elevation="101dp"
+            android:onClick="btnMenuOnClick"/>
+
+        <ImageView
+            android:id="@+id/veh"
+            android:layout_width="@dimen/cell_size"
+            android:layout_height="@dimen/cell_size"
+            android:gravity="end"
+            android:src="@drawable/medium_tank"
+            tools:layout_editor_absoluteX="168dp"
+            tools:layout_editor_absoluteY="215dp" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/materials_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:layout_marginTop="@dimen/cell_size"
+        android:layout_marginEnd="4dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <ImageView
+            android:id="@+id/btn_clear"
+            android:layout_width="@dimen/btn_size"
+            android:layout_height="@dimen/btn_size"
+            android:layout_margin="2dp"
+            android:alpha="0.5"
+            android:onClick="btnMaterialOnClick"
+            android:src="@drawable/clear" />
+
+        <ImageView
+            android:id="@+id/btn_brick"
+            android:layout_width="@dimen/btn_size"
+            android:layout_height="@dimen/btn_size"
+            android:layout_margin="2dp"
+            android:onClick="btnMaterialOnClick"
+            android:src="@drawable/brick" />
+
+        <ImageView
+            android:id="@+id/btn_concrete"
+            android:layout_width="@dimen/btn_size"
+            android:layout_height="@dimen/btn_size"
+            android:layout_margin="2dp"
+            android:onClick="btnMaterialOnClick"
+            android:src="@drawable/concrete" />
+
+        <ImageView
+            android:id="@+id/btn_grass"
+            android:layout_width="@dimen/btn_size"
+            android:layout_height="@dimen/btn_size"
+            android:layout_margin="2dp"
+            android:onClick="btnMaterialOnClick"
+            android:src="@drawable/grass" />
+
+        <ImageView
+            android:id="@+id/btn_base"
+            android:layout_width="@dimen/btn_size"
+            android:layout_height="@dimen/btn_size"
+            android:layout_margin="2dp"
+            android:onClick="btnMaterialOnClick"
+            android:src="@drawable/base" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/game_btns_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:layout_marginEnd="@dimen/cell_size"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <ImageView
+            android:id="@+id/anotherBtn"
+            android:layout_width="@dimen/btn_size"
+            android:layout_height="@dimen/btn_size"
+            android:layout_margin="2dp"
+            android:src="@drawable/brick" />
+
+        <ImageView
+            android:id="@+id/btn_save"
+            android:layout_width="@dimen/btn_size"
+            android:layout_height="@dimen/btn_size"
+            android:layout_margin="2dp"
+            android:alpha="0.5"
+            android:onClick="saveBtnOnClick"
+            android:src="@drawable/ic_save" />
+    </LinearLayout>
+
+
+</FrameLayout>
