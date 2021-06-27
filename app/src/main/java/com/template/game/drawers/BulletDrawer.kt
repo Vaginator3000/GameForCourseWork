@@ -15,6 +15,7 @@ import com.template.game.enums.Material
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
 import com.template.game.utils.getElementByCoord
+import com.template.game.utils.runOnUiThread
 
 class BulletDrawer(val container: FrameLayout) {
     var BULLET_WIDTH = 15
@@ -45,12 +46,12 @@ class BulletDrawer(val container: FrameLayout) {
                             currentDirection,
                             Coordinate(bullet.top, bullet.left))
 
-                    (container.context as Activity).runOnUiThread {
+                    container.runOnUiThread {
                         container.removeView(bullet)
                         container.addView(bullet,0)
                     }
                 }
-                (container.context as Activity).runOnUiThread {
+                container.runOnUiThread {
                     container.removeView(bullet)
                 }
             }

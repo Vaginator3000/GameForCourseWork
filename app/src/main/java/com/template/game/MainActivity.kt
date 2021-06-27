@@ -3,31 +3,30 @@ package com.template.game
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.template.game.drawers.BulletDrawer
-import com.template.game.drawers.ElementDrawer
-import com.template.game.drawers.GridDrawer
-import com.template.game.drawers.VehDrawer
+import androidx.core.view.marginStart
+import androidx.core.view.marginTop
+import com.template.game.drawers.*
 import com.template.game.enums.Direction
 import com.template.game.enums.Material
-import com.template.game.models.Coordinate
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_main_menu.*
 import kotlinx.coroutines.*
 import java.util.*
 
 
-const val CELL_SIZE = 50
 var MOVE_VEH = false
-var MAX_VERTICAL_CELLS_AMOUNT = 0
-var MAX_HORIZONTAL_CELLS_AMOUNT = 0
+var CELL_SIZE = 0
+var MAX_VERTICAL_CELLS_AMOUNT = 24
+var MAX_HORIZONTAL_CELLS_AMOUNT = 14
 var MAX_FIELD_HEIGHT = 0
 var MAX_FIELD_WIDTH = 0
 
 class MainActivity : AppCompatActivity() {
     private var editMode = false
     private var currentDirection = Direction.UP
+
 
     private val gridDrawer by lazy {
         GridDrawer(container)
@@ -45,6 +44,10 @@ class MainActivity : AppCompatActivity() {
         VehDrawer(container)
     }
 
+    private val enemyDrawer by lazy {
+        EnemyDrawer(container)
+    }
+
     private val lvlSaver by lazy {
         LvlSaver(this)
     }
@@ -54,26 +57,39 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        touchListener()
-
-        setMaxValues()
-
+        setValues()
+        startPlayer()
         elementDrawer.drawElemensOnStart(lvlSaver.loadLvl())
+        fragmentBtnsListener()
 
     }
 
-    fun setMaxValues() {
+    fun fragmentBtnsListener() {
+        btnStart.setOnClickListener {
+            menuFragment.view?.visibility = View.GONE
+            enemyDrawer.startEnemyDrawing(elementDrawer.elements)
+        }
+        btnSeparating.setOnClickListener {
+            menuFragment.view?.visibility = View.GONE
+        }
+        btnRules.setOnClickListener {
+        }
+        btnExit.setOnClickListener {
+            this.finish()
+        }
+    }
+
+    fun setValues(){
         btnMenu.post {
-            MAX_VERTICAL_CELLS_AMOUNT = mainLayout.height / CELL_SIZE
-            MAX_HORIZONTAL_CELLS_AMOUNT = mainLayout.width / CELL_SIZE
+            CELL_SIZE = mainLayout.width / MAX_HORIZONTAL_CELLS_AMOUNT
             MAX_FIELD_HEIGHT = CELL_SIZE * MAX_VERTICAL_CELLS_AMOUNT
             MAX_FIELD_WIDTH = CELL_SIZE * MAX_HORIZONTAL_CELLS_AMOUNT
         }
     }
 
 
-    fun touchListener() {
-        CoroutineScope(Dispatchers.IO).launch {
+    fun startPlayer() {
+        CoroutineScope(Dispatchers.Default).launch {
             while (true) {
                 if (MOVE_VEH) {
                     val rightleft = (veh.rotation == 90f || veh.rotation == 270f)
@@ -152,8 +168,8 @@ class MainActivity : AppCompatActivity() {
         editMode = !editMode
     }
 
-    private fun showOrHideSettings(show: Boolean) {
-        if(show) {
+    private fun showOrHideSettings(hide: Boolean) {
+        if(hide) {
             gridDrawer.removeGrid()
             btnMenu.background = resources.getDrawable(R.mipmap.ic_menu)
             materials_container.visibility = View.GONE

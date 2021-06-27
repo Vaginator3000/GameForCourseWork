@@ -1,5 +1,6 @@
 package com.template.game.drawers
 
+import android.app.Activity
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -7,7 +8,7 @@ import com.template.game.CELL_SIZE
 import com.template.game.enums.Material
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
-import com.template.game.utils.getElementByCoord
+import com.template.game.utils.*
 
 class ElementDrawer(val container: FrameLayout) {
     var currentMaterial = Material.EMPTY
@@ -88,25 +89,14 @@ class ElementDrawer(val container: FrameLayout) {
     private fun drawView(coord: Coordinate) {
         removeElementIfCanExistOnlyOne()
 
-        val view = ImageView(container.context)
-        val lParams = FrameLayout.LayoutParams(currentMaterial.width * CELL_SIZE,
-                                                currentMaterial.height * CELL_SIZE)
-
-        view.setImageResource(currentMaterial.image!!)
-
-        lParams.topMargin = coord.top
-        lParams.leftMargin = coord.left
-
         val newElement = Element(
-            material = currentMaterial,
-            coord = coord,
-            width = currentMaterial.width,
-            height = currentMaterial.height
+                material = currentMaterial,
+                coord = coord,
+                width = currentMaterial.width,
+                height = currentMaterial.height
         )
-        view.id = newElement.viewId
-        view.layoutParams = lParams
-        view.scaleType = ImageView.ScaleType.FIT_XY
-        container.addView(view)
+
+        newElement.drawElement(container)
         elements.add(newElement)
 
     }

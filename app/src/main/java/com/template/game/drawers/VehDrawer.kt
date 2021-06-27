@@ -1,5 +1,6 @@
 package com.template.game.drawers
 
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import com.template.game.CELL_SIZE
@@ -8,6 +9,7 @@ import com.template.game.MAX_FIELD_WIDTH
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
 import com.template.game.utils.getElementByCoord
+import kotlin.math.log
 
 class VehDrawer(val container: FrameLayout) {
     fun changeVehPosition(veh: View, rightleft: Boolean, length: Int, elements: List<Element>) {
@@ -40,7 +42,7 @@ class VehDrawer(val container: FrameLayout) {
                 return true
 
         if (rightleft && length == -CELL_SIZE) // движение влево
-            if (lParams.leftMargin > 0)
+            if (lParams.leftMargin >= 0)
                 return true
 
         if (!rightleft && length == CELL_SIZE) // движение вниз
@@ -48,7 +50,7 @@ class VehDrawer(val container: FrameLayout) {
                 return true
 
         if (!rightleft && length == -CELL_SIZE) // движение вверх
-            if (lParams.topMargin > 0)
+            if (lParams.topMargin >= 0)
                 return true
 
         return false

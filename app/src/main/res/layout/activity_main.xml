@@ -19,16 +19,20 @@
             android:layout_margin="4dp"
             android:background="@mipmap/ic_menu"
             android:elevation="101dp"
-            android:onClick="btnMenuOnClick"/>
+            android:onClick="btnMenuOnClick" />
 
         <ImageView
             android:id="@+id/veh"
             android:layout_width="@dimen/cell_size"
             android:layout_height="@dimen/cell_size"
             android:gravity="end"
+            android:layout_marginTop="100dp"
+            android:layout_marginLeft="100dp"
+            android:scaleType="fitXY"
             android:src="@drawable/medium_tank"
             tools:layout_editor_absoluteX="168dp"
             tools:layout_editor_absoluteY="215dp" />
+
     </FrameLayout>
 
     <LinearLayout
@@ -111,7 +115,15 @@
             android:alpha="0.5"
             android:onClick="saveBtnOnClick"
             android:src="@drawable/ic_save" />
+
     </LinearLayout>
+
+    <fragment
+        android:id="@+id/menuFragment"
+        android:name="com.template.game.MainMenuFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="11dp" />
 
 
 </FrameLayout>

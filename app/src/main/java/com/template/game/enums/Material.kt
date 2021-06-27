@@ -2,7 +2,7 @@ package com.template.game.enums
 
 import com.template.game.R
 
-var SPAWN_SIZE = 2
+var ENEMY_SIZE = 2
 var ELEMENT_SIZE = 1
 var BASE_WIDTH = 4
 var BASE_HEIGHT = 3
@@ -66,23 +66,13 @@ enum class Material(val canVehGoThrow: Boolean,
         image = R.drawable.base
     ),
 
-    PLAYER_VEH_SPAWN (
-        canVehGoThrow = true,
-        canBulletGoThrow = true,
-        canSmallBulletDestroy = false,
-        amountElementsOnScreen = 1,
-        width = SPAWN_SIZE,
-        height = SPAWN_SIZE,
-        image = R.drawable.medium_tank
-    ),
-
-    ENEMY_VEH_SPAWN (
-        canVehGoThrow = true,
-        canBulletGoThrow = true,
+    ENEMY_VEH (
+        canVehGoThrow = false,
+        canBulletGoThrow = false,
         canSmallBulletDestroy = false,
         amountElementsOnScreen = 3,
-        width = SPAWN_SIZE,
-        height = SPAWN_SIZE,
+        width = ENEMY_SIZE,
+        height = ENEMY_SIZE,
         image = R.drawable.old_tank
     )
 

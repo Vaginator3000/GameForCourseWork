@@ -34,6 +34,7 @@ android {
 
 dependencies {
 
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     apply plugin: 'kotlin-android-extensions'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation 'androidx.core:core-ktx:1.5.0'
