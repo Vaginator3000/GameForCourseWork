@@ -21,17 +21,15 @@
             android:elevation="101dp"
             android:onClick="btnMenuOnClick" />
 
-        <ImageView
+        <!--<ImageView
             android:id="@+id/veh"
             android:layout_width="@dimen/cell_size"
             android:layout_height="@dimen/cell_size"
             android:gravity="end"
-            android:layout_marginTop="100dp"
-            android:layout_marginLeft="100dp"
             android:scaleType="fitXY"
             android:src="@drawable/medium_tank"
             tools:layout_editor_absoluteX="168dp"
-            tools:layout_editor_absoluteY="215dp" />
+            tools:layout_editor_absoluteY="215dp" />-->
 
     </FrameLayout>
 

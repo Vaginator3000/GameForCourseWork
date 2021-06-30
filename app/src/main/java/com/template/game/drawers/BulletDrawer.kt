@@ -5,88 +5,160 @@ import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.Toast
-import com.template.game.CELL_SIZE
-import com.template.game.MAX_FIELD_HEIGHT
-import com.template.game.MAX_FIELD_WIDTH
-import com.template.game.R
+import com.template.game.*
 import com.template.game.enums.Direction
 import com.template.game.enums.Material
+import com.template.game.models.Bullet
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
-import com.template.game.utils.getElementByCoord
-import com.template.game.utils.runOnUiThread
+import com.template.game.utils.*
+import com.template.game.vehicals.Veh
+import java.lang.Thread.sleep
+import kotlin.math.abs
 
-class BulletDrawer(val container: FrameLayout) {
-    var BULLET_WIDTH = 15
-    var BULLET_HEIGHT = 25
+class BulletDrawer(
+        val container: FrameLayout,
+        val elements: MutableList<Element>,
+        val enemyDrawer: EnemyDrawer) {
 
-    private var canBulletGoNext = true
-    private var bulletThread: Thread? = null
+    init {
+        movaAllBullets()
+    }
 
-    private fun checkBulletIsAlreadyExist() = bulletThread != null && bulletThread!!.isAlive
+    private var BULLET_WIDTH = 15
+    private var BULLET_HEIGHT = 25
 
-    fun moveBullet(view: View, currentDirection: Direction, elementsOnContainer: MutableList<Element>) {
-        canBulletGoNext = true
-        if(!checkBulletIsAlreadyExist()) {
-            bulletThread = Thread {
-                val bullet = createBullet(view, currentDirection)
-                while (checkBulletCanMoveThrowBorder(bullet, Coordinate(bullet.top, bullet.left)) && canBulletGoNext) {
-                    val lParams = bullet.layoutParams as FrameLayout.LayoutParams
-                    when (currentDirection) {
-                        Direction.UP -> lParams.topMargin -= BULLET_HEIGHT
-                        Direction.BOTTOM -> lParams.topMargin += BULLET_HEIGHT
-                        Direction.LEFT -> lParams.leftMargin -= BULLET_WIDTH
-                        Direction.RIGHT -> lParams.leftMargin += BULLET_WIDTH
-                    }
-                    Thread.sleep(30)
+    private val elementsOnContainer = elements
+    private val allBullets = mutableListOf<Bullet>()
 
-                    bulletActionOnElements (
-                            elementsOnContainer,
-                            currentDirection,
-                            Coordinate(bullet.top, bullet.left))
-
-                    container.runOnUiThread {
-                        container.removeView(bullet)
-                        container.addView(bullet,0)
-                    }
-                }
-                container.runOnUiThread {
-                    container.removeView(bullet)
-                }
+    private fun movaAllBullets() {
+        Thread {
+            while (true) {
+                if (!GameCore.isPlay) continue
+                interactWithBullets()
+                sleep(30)
             }
-            bulletThread!!.start()
+        }.start()
+    }
+
+    private fun interactWithBullets() {
+        allBullets.toList().forEach { bullet ->
+            val view = bullet.view
+            val lParams = view.layoutParams as FrameLayout.LayoutParams
+            if (bullet.canBulletMoveNext()) {
+                when (bullet.direction) {
+                    Direction.UP -> lParams.topMargin -= BULLET_HEIGHT
+                    Direction.BOTTOM -> lParams.topMargin += BULLET_HEIGHT
+                    Direction.LEFT -> lParams.leftMargin -= BULLET_WIDTH
+                    Direction.RIGHT -> lParams.leftMargin += BULLET_WIDTH
+                }
+
+                bulletActionOnElements (bullet)
+
+                container.runOnUiThread {
+                    container.removeView(view)
+                    container.addView(view)
+                }
+            } else {
+                stopBullet(bullet)
+            }
+            bullet.stopIntersectingBullets()
+        }
+        removeInconsistentBullets()
+    }
+
+    private fun removeInconsistentBullets() {
+        val removingList = allBullets.filter { !it.canMove }
+        removingList.forEach {
+            stopBullet(it)
+            container.runOnUiThread {
+                container.removeView(it.view)
+            }
+        }
+        allBullets.removeAll(removingList)
+
+    }
+
+    private fun Bullet.stopIntersectingBullets() {
+        val thisBulletCoord = this.view.getViewCurrentCoord()
+        for (bullet in allBullets) {
+            if (bullet == this) {
+            //    Log.i("MyLog", "${this.veh.element.viewId} --- ${this.view.id} --- ${thisBulletCoord}")
+                continue
+            }
+            val bulletCoord = bullet.view.getViewCurrentCoord()
+
+        //    if (bulletCoord == thisBulletCoord) {
+            if ( abs(bulletCoord.left - thisBulletCoord.left) < CELL_SIZE &&
+                    abs(bulletCoord.top - thisBulletCoord.top) < CELL_SIZE) {
+
+             /*  if (bullet.direction == Direction.RIGHT || bullet.direction == Direction.LEFT &&
+                       this.direction == Direction.RIGHT || this.direction == Direction.LEFT) */
+
+
+                stopBullet(bullet)
+                stopBullet(this)
+                return
+            }
         }
     }
 
-    private fun bulletActionOnElements(
-                                elementsOnContainer: MutableList<Element>,
-                                currentDirection: Direction,
-                                bulletCoord: Coordinate) {
+    fun addNewBulletForVeh(veh:Veh) {
+        val view = container.findViewById<View>(veh.element.viewId) ?: return
+        if (veh.hasBullet()) return
+        allBullets.add( Bullet(createBullet(view, veh.currentDirection), veh.currentDirection, veh) )
+    }
 
-        compareElements(elementsOnContainer, getCoordsForBulletDirection(currentDirection, bulletCoord))
+    fun Veh.hasBullet(): Boolean =
+            allBullets.firstOrNull { it.veh == this} != null
+
+    private fun Bullet.canBulletMoveNext() = checkBulletCanMoveThrowBorder(this.view, this.view.getViewCurrentCoord()) && this.canMove
+
+
+    private fun bulletActionOnElements(
+                                bullet: Bullet) {
+
+        compareElements(getCoordsForBulletDirection(bullet), bullet)
     }
 
     private fun compareElements(
-            elementsOnContainer: MutableList<Element>,
-            foundedCoordinates: List<Coordinate>) {
+            foundedCoordinates: List<Coordinate>,
+            bullet: Bullet) {
 
         foundedCoordinates.forEach {
-            val elementToDelete = getElementByCoord(it, elementsOnContainer)
-            removeElementsAndDeleteBullet(elementToDelete, elementsOnContainer)
+            var elementToDelete = getElementByCoord(it, elementsOnContainer)
+            if (elementToDelete == null)
+                elementToDelete = getVehByCoord(it, enemyDrawer.allEnemys)
+            if (elementToDelete != bullet.veh.element)
+                removeElementsAndDeleteBullet(elementToDelete, bullet)
         }
 
     }
 
-    private fun removeElementsAndDeleteBullet(elementToDelete: Element?, elementsOnContainer: MutableList<Element>) {
+    private fun removeElementsAndDeleteBullet(elementToDelete: Element?, bullet: Bullet) {
         if(elementToDelete != null) {
             if (!elementToDelete.material.canBulletGoThrow)
-                canBulletGoNext = false
+                stopBullet(bullet)
+            if (bullet.veh.element.material == Material.ENEMY_VEH && elementToDelete.material == Material.ENEMY_VEH) {
+                stopBullet(bullet)
+                return
+            }
             if (elementToDelete.material.canSmallBulletDestroy) {
                 removeView(elementToDelete)
                 elementsOnContainer.remove(elementToDelete)
+                removeVeh(elementToDelete)
             }
         }
+    }
+
+    private fun removeVeh(element: Element) {
+        val vehElements = enemyDrawer.allEnemys.map { it.element }
+        val vehIndex = vehElements.indexOf(element)
+        enemyDrawer.removeVeh(vehIndex)
+    }
+
+    private fun stopBullet(bullet: Bullet) {
+        bullet.canMove = false
     }
 
     private fun removeView(elementToDelete: Element) {
@@ -97,7 +169,10 @@ class BulletDrawer(val container: FrameLayout) {
         }
     }
 
-    private fun getCoordsForBulletDirection(currentDirection: Direction, bulletCoord: Coordinate): List<Coordinate> {
+    private fun getCoordsForBulletDirection(bullet: Bullet): List<Coordinate> {
+        val currentDirection = bullet.direction
+        val bulletCoord = bullet.view.getViewCurrentCoord()
+
         if (currentDirection == Direction.RIGHT || currentDirection == Direction.LEFT) {
             val topCell = bulletCoord.top - bulletCoord.top % CELL_SIZE
             val bottomCell = topCell + CELL_SIZE
@@ -142,7 +217,7 @@ class BulletDrawer(val container: FrameLayout) {
     }
 
 
-    fun getBulletCoord(
+    private fun getBulletCoord(
             bullet: ImageView,
             veh: View,
             currentDirection: Direction

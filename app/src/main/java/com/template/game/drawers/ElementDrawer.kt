@@ -1,6 +1,7 @@
 package com.template.game.drawers
 
 import android.app.Activity
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -28,15 +29,15 @@ class ElementDrawer(val container: FrameLayout) {
     fun drawElemensOnStart (elements: List<Element>?) {
         elements?.forEach {
             currentMaterial = it.material
-            drawView(it.coord)
-
+            drawElement(it)
         }
+        currentMaterial = Material.EMPTY
     }
 
     private fun drawOrReplaceView(coord: Coordinate) {
         val viewOnCoord = getElementByCoord(coord, elements)
         if (viewOnCoord == null)
-            drawView(coord)
+            createAndDrowElement(coord)
         else
             replaceView(coord)
     }
@@ -67,7 +68,7 @@ class ElementDrawer(val container: FrameLayout) {
 
     private fun replaceView(coord: Coordinate) {
         delView(coord)
-        drawView(coord)
+        createAndDrowElement(coord)
     }
 
     private fun delView(coord: Coordinate) {
@@ -86,18 +87,18 @@ class ElementDrawer(val container: FrameLayout) {
 
     }
 
-    private fun drawView(coord: Coordinate) {
+    fun drawElement(element: Element) {
         removeElementIfCanExistOnlyOne()
+        element.drawElement(container)
+        elements.add(element)
 
+    }
+
+    private fun createAndDrowElement(coord: Coordinate) {
         val newElement = Element(
                 material = currentMaterial,
-                coord = coord,
-                width = currentMaterial.width,
-                height = currentMaterial.height
+                coord = coord
         )
-
-        newElement.drawElement(container)
-        elements.add(newElement)
-
+        drawElement(newElement)
     }
 }

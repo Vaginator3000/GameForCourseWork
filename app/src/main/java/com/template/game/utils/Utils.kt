@@ -2,27 +2,38 @@ package com.template.game.utils
 
 import android.app.Activity
 import android.util.Log
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
 import com.template.game.CELL_SIZE
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
+import com.template.game.vehicals.Veh
 
 
 fun getElementByCoord(coord: Coordinate, elements: List<Element>): Element? {
-    elements.forEach {
-        for (height in 0 until it.height)
-            for (width in 0 until it.width) {
+    for(element in elements.toList()) {
+        for (height in 0 until element.height)
+            for (width in 0 until element.width) {
                 val searchingCoord = Coordinate(
-                        it.coord.top + height * CELL_SIZE,
-                        it.coord.left + width * CELL_SIZE,
+                        element.coord.top + height * CELL_SIZE,
+                        element.coord.left + width * CELL_SIZE,
                 )
                 if (searchingCoord == coord)
-                    return it
+                    return element
             }
     }
     return null
+}
+
+fun View.getViewCurrentCoord(): Coordinate {
+    val lParams = this.layoutParams as FrameLayout.LayoutParams
+    return Coordinate(lParams.topMargin, lParams.leftMargin)
+}
+
+fun getVehByCoord(coord: Coordinate, enemyVehs: MutableList<Veh>): Element? {
+    return getElementByCoord(coord, enemyVehs.map { it.element })
 }
 
 fun Element.drawElement(container: FrameLayout) {
@@ -39,7 +50,7 @@ fun Element.drawElement(container: FrameLayout) {
     view.layoutParams = lParams
     view.scaleType = ImageView.ScaleType.FIT_XY
 
-    (container.context as Activity).runOnUiThread {
+    container.runOnUiThread {
         container.addView(view)
     }
 }

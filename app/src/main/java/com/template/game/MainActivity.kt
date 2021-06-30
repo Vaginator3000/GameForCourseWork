@@ -1,22 +1,24 @@
 package com.template.game
 
+import android.graphics.Point
 import android.os.Bundle
-import android.util.Log
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.marginStart
-import androidx.core.view.marginTop
+import androidx.core.content.ContextCompat
 import com.template.game.drawers.*
 import com.template.game.enums.Direction
 import com.template.game.enums.Material
+import com.template.game.models.Coordinate
+import com.template.game.models.Element
+import com.template.game.vehicals.Veh
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_main_menu.*
 import kotlinx.coroutines.*
 import java.util.*
 
 
-var MOVE_VEH = false
 var CELL_SIZE = 0
 var MAX_VERTICAL_CELLS_AMOUNT = 24
 var MAX_HORIZONTAL_CELLS_AMOUNT = 14
@@ -24,9 +26,20 @@ var MAX_FIELD_HEIGHT = 0
 var MAX_FIELD_WIDTH = 0
 
 class MainActivity : AppCompatActivity() {
-    private var editMode = false
-    private var currentDirection = Direction.UP
+ //   private var editMode = false
 
+    private val player by lazy {
+        Veh(
+                container,
+                Element(
+                        material = Material.PLAYER_VEH,
+                        coord = getPlayerCoord()
+                ),
+                Direction.UP,
+                elementDrawer.elements,
+                enemyDrawer
+        )
+    }
 
     private val gridDrawer by lazy {
         GridDrawer(container)
@@ -37,20 +50,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val bulletDrawer by lazy {
-        BulletDrawer(container)
-    }
-
-    private val vehDrawer by lazy {
-        VehDrawer(container)
+        BulletDrawer(container,elementDrawer.elements, enemyDrawer)
     }
 
     private val enemyDrawer by lazy {
-        EnemyDrawer(container)
+        EnemyDrawer(container, elementDrawer.elements)
     }
 
     private val lvlSaver by lazy {
         LvlSaver(this)
     }
+
+    private fun getPlayerCoord() = Coordinate(
+            top = MAX_FIELD_HEIGHT - Material.PLAYER_VEH.height * CELL_SIZE,
+            left = MAX_FIELD_WIDTH - 8 * CELL_SIZE,
+    )
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,16 +72,58 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         setValues()
-        startPlayer()
-        elementDrawer.drawElemensOnStart(lvlSaver.loadLvl())
         fragmentBtnsListener()
+        elementDrawer.drawElemensOnStart(lvlSaver.loadLvl())
 
+        startGameProcess()
+
+        val playerVehView = container.findViewById<View>(player.element.viewId)
+
+        onTouchListenerNoInEditMode()
+
+        playerVehView.setOnClickListener {
+            val lParams = playerVehView.layoutParams as FrameLayout.LayoutParams
+            Toast.makeText(this,
+                    "${playerVehView.width} --- ${playerVehView.height}\n${Material.PLAYER_VEH.width} --- ${Material.PLAYER_VEH.height}",
+                    Toast.LENGTH_SHORT).show()
+        }
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        pauseGame()
+    }
+
+    private fun startGameProcess() {
+
+        elementDrawer.drawElemensOnStart(listOf(player.element))
+        val playerVehView = container.findViewById<View>(player.element.viewId)
+
+        playerVehView.layoutParams.width = Material.PLAYER_VEH.width * CELL_SIZE
+        playerVehView.layoutParams.height = Material.PLAYER_VEH.height * CELL_SIZE
+
+        elementDrawer.elements.add(player.element)
+        player.movePlayer()
+        enemyDrawer.startEnemyCreate()
+    }
+
+    private fun pauseGame() {
+        GameCore.isPlay = false
+        showOrHideSettings(GameCore.isPlay)
+    }
+
+    private fun continueGame() {
+        GameCore.isPlay = true
+        showOrHideSettings(GameCore.isPlay)
     }
 
     fun fragmentBtnsListener() {
         btnStart.setOnClickListener {
             menuFragment.view?.visibility = View.GONE
-            enemyDrawer.startEnemyDrawing(elementDrawer.elements)
+            startGameProcess()
+            continueGame()
+            enemyDrawer.startEnemyCreate()
         }
         btnSeparating.setOnClickListener {
             menuFragment.view?.visibility = View.GONE
@@ -79,105 +135,86 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun setValues(){
-        btnMenu.post {
-            CELL_SIZE = mainLayout.width / MAX_HORIZONTAL_CELLS_AMOUNT
-            MAX_FIELD_HEIGHT = CELL_SIZE * MAX_VERTICAL_CELLS_AMOUNT
-            MAX_FIELD_WIDTH = CELL_SIZE * MAX_HORIZONTAL_CELLS_AMOUNT
-        }
+    fun setValues() {
+        val display = windowManager.defaultDisplay
+        val size = Point()
+        display.getSize(size)
+        val width: Int = size.x
+        val height: Int = size.y
+
+        CELL_SIZE = width / MAX_HORIZONTAL_CELLS_AMOUNT
+        MAX_FIELD_HEIGHT = CELL_SIZE * MAX_VERTICAL_CELLS_AMOUNT
+        MAX_FIELD_WIDTH = CELL_SIZE * MAX_HORIZONTAL_CELLS_AMOUNT
+
+        enemyDrawer.bulletDrawer = bulletDrawer
     }
 
-
-    fun startPlayer() {
-        CoroutineScope(Dispatchers.Default).launch {
-            while (true) {
-                if (MOVE_VEH) {
-                    val rightleft = (veh.rotation == 90f || veh.rotation == 270f)
-                    val length = if (veh.rotation == 90f || veh.rotation == 180f) CELL_SIZE else -CELL_SIZE
-
-                    runOnUiThread {
-                        vehDrawer.changeVehPosition(veh, rightleft, length, elementDrawer.elements)
-                    }
-
-                    delay(100)
-                }
-            }
-        }
-
-        if (!editMode) {
-            onTouchListenerNoInEditMode()
-
-            container.removeView(veh)
-            container.addView(veh)
-        }
-
-    }
 
     private fun onTouchListenerInEditMode() {
         container.setOnTouchListener { _, event ->
             elementDrawer.onTouchContainer(event.x, event.y)
             return@setOnTouchListener true
         }
+
     }
 
     private fun onTouchListenerNoInEditMode() {
         container.setOnTouchListener(object : OnSwipeListener(this@MainActivity) {
             override fun onSwipeLeft() {
                 super.onSwipeLeft()
-                veh.rotation = 270f
-                currentDirection = Direction.LEFT
+                player.changeDirection(Direction.LEFT)
             }
 
             override fun onSwipeRight() {
                 super.onSwipeRight()
-                veh.rotation = 90f
-                currentDirection = Direction.RIGHT
+                player.changeDirection(Direction.RIGHT)
             }
 
             override fun onSwipeUp() {
                 super.onSwipeUp()
-                veh.rotation = 0f
-                currentDirection = Direction.UP
+                player.changeDirection(Direction.UP)
             }
 
             override fun onSwipeDown() {
                 super.onSwipeDown()
-                veh.rotation = 180f
-                currentDirection = Direction.BOTTOM
+                player.changeDirection(Direction.BOTTOM)
             }
 
             override fun onLongClick() {
-                MOVE_VEH = true
+                player.MOVE_VEH = true
                 super.onLongClick()
             }
 
             override fun onUp() {
-                MOVE_VEH = false
+                player.MOVE_VEH = false
                 super.onUp()
             }
 
             override fun onDoubleClick() {
-                bulletDrawer.moveBullet(veh, currentDirection, elementDrawer.elements)
+                bulletDrawer.addNewBulletForVeh(player)
                 super.onDoubleClick()
             }
         })
+
     }
 
     fun btnMenuOnClick(view: View) {
-        showOrHideSettings(editMode)
-        editMode = !editMode
+        if(GameCore.isPlay)
+            pauseGame()
+        else
+            continueGame()
     }
 
     private fun showOrHideSettings(hide: Boolean) {
         if(hide) {
             gridDrawer.removeGrid()
-            btnMenu.background = resources.getDrawable(R.mipmap.ic_menu)
+            btnMenu.background = ContextCompat.getDrawable(this, R.mipmap.ic_menu)
             materials_container.visibility = View.GONE
             game_btns_container.visibility = View.GONE
             onTouchListenerNoInEditMode()
         } else {
             gridDrawer.drawGrid()
-            btnMenu.background = resources.getDrawable(R.drawable.ic_play)
+            btnMenu.background = ContextCompat.getDrawable(this, R.drawable.ic_play)
             materials_container.visibility = View.VISIBLE
             game_btns_container.visibility = View.VISIBLE
             onTouchListenerInEditMode()
@@ -204,7 +241,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if(editMode) {
+        if(!GameCore.isPlay) {
             onTouchListenerInEditMode()
         }
     }
