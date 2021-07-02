@@ -12,6 +12,7 @@ import com.template.game.enums.Direction
 import com.template.game.enums.Material
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
+import com.template.game.sounds.SoundPlayer
 import com.template.game.vehicals.Veh
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_main_menu.*
@@ -50,15 +51,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val bulletDrawer by lazy {
-        BulletDrawer(container,elementDrawer.elements, enemyDrawer)
+        BulletDrawer(container,elementDrawer.elements, enemyDrawer, soundPlayer, gameCore)
     }
 
     private val enemyDrawer by lazy {
-        EnemyDrawer(container, elementDrawer.elements)
+        EnemyDrawer(container, elementDrawer.elements, soundPlayer, gameCore)
     }
 
     private val lvlSaver by lazy {
         LvlSaver(this)
+    }
+
+    private val gameCore by lazy {
+        GameCore(this)
+    }
+
+    private val soundPlayer by lazy {
+        SoundPlayer(this)
     }
 
     private fun getPlayerCoord() = Coordinate(
@@ -79,8 +88,6 @@ class MainActivity : AppCompatActivity() {
 
         val playerVehView = container.findViewById<View>(player.element.viewId)
 
-        onTouchListenerNoInEditMode()
-
         playerVehView.setOnClickListener {
             val lParams = playerVehView.layoutParams as FrameLayout.LayoutParams
             Toast.makeText(this,
@@ -96,6 +103,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startGameProcess() {
+        soundPlayer.playIntro()
 
         elementDrawer.drawElemensOnStart(listOf(player.element))
         val playerVehView = container.findViewById<View>(player.element.viewId)
@@ -109,23 +117,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun pauseGame() {
-        GameCore.isPlay = false
-        showOrHideSettings(GameCore.isPlay)
+        gameCore.pauseGame()
+        soundPlayer.pauseSounds()
+        showOrHideSettings(gameCore.isPlaying())
     }
 
     private fun continueGame() {
-        GameCore.isPlay = true
-        showOrHideSettings(GameCore.isPlay)
+        soundPlayer.stopIntro()
+        gameCore.startGame()
+        showOrHideSettings(gameCore.isPlaying())
     }
 
     fun fragmentBtnsListener() {
         btnStart.setOnClickListener {
+            btnMenu.visibility = View.VISIBLE
+            onTouchListenerNoInEditMode()
             menuFragment.view?.visibility = View.GONE
             startGameProcess()
             continueGame()
             enemyDrawer.startEnemyCreate()
         }
         btnSeparating.setOnClickListener {
+            btnMenu.visibility = View.VISIBLE
             menuFragment.view?.visibility = View.GONE
         }
         btnRules.setOnClickListener {
@@ -136,6 +149,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun setValues() {
+        soundPlayer.loadSounds()
+
         val display = windowManager.defaultDisplay
         val size = Point()
         display.getSize(size)
@@ -182,11 +197,13 @@ class MainActivity : AppCompatActivity() {
 
             override fun onLongClick() {
                 player.MOVE_VEH = true
+                soundPlayer.vehMove()
                 super.onLongClick()
             }
 
             override fun onUp() {
                 player.MOVE_VEH = false
+                soundPlayer.vehStop()
                 super.onUp()
             }
 
@@ -199,7 +216,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun btnMenuOnClick(view: View) {
-        if(GameCore.isPlay)
+        if(gameCore.isPlaying())
             pauseGame()
         else
             continueGame()
@@ -241,7 +258,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if(!GameCore.isPlay) {
+        if(!gameCore.isPlaying()) {
             onTouchListenerInEditMode()
         }
     }
@@ -249,6 +266,11 @@ class MainActivity : AppCompatActivity() {
     fun saveBtnOnClick(view: View) {
         lvlSaver.saveLvl(elementDrawer.elements)
         Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        soundPlayer.stopSounds()
     }
 
 }

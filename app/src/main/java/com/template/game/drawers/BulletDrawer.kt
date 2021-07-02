@@ -1,7 +1,6 @@
 package com.template.game.drawers;
 
 import android.app.Activity
-import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -11,6 +10,7 @@ import com.template.game.enums.Material
 import com.template.game.models.Bullet
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
+import com.template.game.sounds.SoundPlayer
 import com.template.game.utils.*
 import com.template.game.vehicals.Veh
 import java.lang.Thread.sleep
@@ -19,7 +19,9 @@ import kotlin.math.abs
 class BulletDrawer(
         val container: FrameLayout,
         val elements: MutableList<Element>,
-        val enemyDrawer: EnemyDrawer) {
+        val enemyDrawer: EnemyDrawer,
+        val soundPlayer: SoundPlayer,
+        val gameCore: GameCore) {
 
     init {
         movaAllBullets()
@@ -34,7 +36,7 @@ class BulletDrawer(
     private fun movaAllBullets() {
         Thread {
             while (true) {
-                if (!GameCore.isPlay) continue
+                if (!gameCore.isPlaying()) continue
                 interactWithBullets()
                 sleep(30)
             }
@@ -83,17 +85,12 @@ class BulletDrawer(
         val thisBulletCoord = this.view.getViewCurrentCoord()
         for (bullet in allBullets) {
             if (bullet == this) {
-            //    Log.i("MyLog", "${this.veh.element.viewId} --- ${this.view.id} --- ${thisBulletCoord}")
                 continue
             }
             val bulletCoord = bullet.view.getViewCurrentCoord()
 
-        //    if (bulletCoord == thisBulletCoord) {
-            if ( abs(bulletCoord.left - thisBulletCoord.left) < CELL_SIZE &&
-                    abs(bulletCoord.top - thisBulletCoord.top) < CELL_SIZE) {
-
-             /*  if (bullet.direction == Direction.RIGHT || bullet.direction == Direction.LEFT &&
-                       this.direction == Direction.RIGHT || this.direction == Direction.LEFT) */
+            if ( abs(bulletCoord.left - thisBulletCoord.left) < CELL_SIZE / 2 &&
+                    abs(bulletCoord.top - thisBulletCoord.top) < CELL_SIZE / 2) {
 
 
                 stopBullet(bullet)
@@ -104,6 +101,8 @@ class BulletDrawer(
     }
 
     fun addNewBulletForVeh(veh:Veh) {
+        soundPlayer.bulletShot()
+
         val view = container.findViewById<View>(veh.element.viewId) ?: return
         if (veh.hasBullet()) return
         allBullets.add( Bullet(createBullet(view, veh.currentDirection), veh.currentDirection, veh) )
@@ -152,6 +151,8 @@ class BulletDrawer(
     }
 
     private fun removeVeh(element: Element) {
+        if (element.material == Material.PLAYER_VEH)
+            gameCore.killPlayer()
         val vehElements = enemyDrawer.allEnemys.map { it.element }
         val vehIndex = vehElements.indexOf(element)
         enemyDrawer.removeVeh(vehIndex)

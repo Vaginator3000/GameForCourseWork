@@ -1,13 +1,10 @@
 package com.template.game.drawers
 
-import android.app.Activity
-import android.util.Log
-import android.view.View
 import android.widget.FrameLayout
-import android.widget.Toast
 import com.template.game.CELL_SIZE
 import com.template.game.GameCore
 import com.template.game.MAX_FIELD_WIDTH
+import com.template.game.sounds.SoundPlayer
 import com.template.game.enums.Direction
 import com.template.game.enums.Material
 import com.template.game.models.Coordinate
@@ -15,11 +12,13 @@ import com.template.game.models.Element
 import com.template.game.utils.drawElement
 import com.template.game.vehicals.Veh
 
-const val MAX_ENEMY_AMOUNT = 1
+const val MAX_ENEMY_AMOUNT = 5
 
 class EnemyDrawer(
         val container: FrameLayout,
-        val elements: MutableList<Element>) {
+        val elements: MutableList<Element>,
+        val soundPlayer: SoundPlayer,
+        val gameCore: GameCore) {
 
     private val spawnList: List<Coordinate>
     val allEnemys = mutableListOf<Veh>()
@@ -49,7 +48,7 @@ class EnemyDrawer(
         gameStarted = true
         Thread {
             while (enemyAmount < MAX_ENEMY_AMOUNT) {
-                if (!GameCore.isPlay) continue
+                if (!gameCore.isPlaying()) continue
                 drawEnemy()
                 enemyAmount++
                 Thread.sleep(5000)
@@ -81,7 +80,7 @@ class EnemyDrawer(
     private fun moveEnemyVeh() {
         Thread {
             while (true) {
-                if (!GameCore.isPlay) continue
+                if (!gameCore.isPlaying()) continue
                 Thread.sleep(200)
                 goThrowAllVehs()
             }
@@ -89,6 +88,10 @@ class EnemyDrawer(
     }
 
     private fun goThrowAllVehs() {
+        if(allEnemys.isNotEmpty())
+            soundPlayer.vehMove()
+        else
+            soundPlayer.vehStop()
         allEnemys.toList().forEach {
             it.moveEnemy()
             if (isEnemySeePlayer(it) || it.isChanсeBiggerThanPercent(10))
@@ -128,6 +131,7 @@ class EnemyDrawer(
 
     fun removeVeh(vehIndex: Int) {
         if (vehIndex < 0) return
+        soundPlayer.bulletBurst()
         allEnemys.removeAt(vehIndex)
     }
 }

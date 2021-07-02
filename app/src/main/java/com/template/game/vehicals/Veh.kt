@@ -5,7 +5,6 @@ import android.widget.FrameLayout
 import com.template.game.CELL_SIZE
 import com.template.game.MAX_FIELD_HEIGHT
 import com.template.game.MAX_FIELD_WIDTH
-import com.template.game.drawers.BulletDrawer
 import com.template.game.drawers.EnemyDrawer
 import com.template.game.enums.Direction
 import com.template.game.enums.Material
@@ -44,12 +43,12 @@ class Veh(
         Thread {
             while (true) {
                 if (MOVE_VEH) {
-                    container.runOnUiThread {
-                        changeVehPosition()
+                    sleep(250)
+                    if (MOVE_VEH) {
+                        container.runOnUiThread {
+                            changeVehPosition()
+                        }
                     }
-
-                    sleep(100)
-
                 }
 
             }
@@ -66,7 +65,7 @@ class Veh(
 
     fun isChanсeBiggerThanPercent(percent: Int): Boolean {
         val random = Random.nextInt(100)
-        return random <= percent
+        return random < percent
     }
 
     private fun generateRandomDirectionForEnemy() {

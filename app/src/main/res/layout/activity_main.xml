@@ -19,7 +19,8 @@
             android:layout_margin="4dp"
             android:background="@mipmap/ic_menu"
             android:elevation="101dp"
-            android:onClick="btnMenuOnClick" />
+            android:onClick="btnMenuOnClick"
+            android:visibility="invisible" />
 
         <!--<ImageView
             android:id="@+id/veh"
@@ -120,8 +121,18 @@
         android:id="@+id/menuFragment"
         android:name="com.template.game.MainMenuFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:elevation="11dp" />
+        android:layout_height="match_parent" />
 
+    <TextView
+        android:id="@+id/tvGameOver"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="64sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:textColor="#FF0000"
+        android:text="@string/game_over"
+        android:gravity="center"
+        android:layout_gravity="center"/>
 
 </FrameLayout>
