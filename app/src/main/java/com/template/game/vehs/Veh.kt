@@ -1,10 +1,14 @@
-package com.template.game.vehicals
+package com.template.game.vehs
 
+import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageView
 import com.template.game.CELL_SIZE
 import com.template.game.MAX_FIELD_HEIGHT
 import com.template.game.MAX_FIELD_WIDTH
+import com.template.game.R
 import com.template.game.drawers.EnemyDrawer
 import com.template.game.enums.Direction
 import com.template.game.enums.Material
@@ -15,7 +19,7 @@ import java.lang.Thread.sleep
 import kotlin.random.Random
 
 
-class Veh(
+open class Veh(
         var container: FrameLayout,
         val element: Element,
         direction: Direction,
@@ -23,18 +27,17 @@ class Veh(
         val enemyDrawer: EnemyDrawer) {
 
     var MOVE_VEH = false
+
     val elements = elementsOnContainer
     var currentDirection = direction
     lateinit var vehView: View
 
     private fun init() {
         vehView = container.findViewById<View>(element.viewId) ?: return
-        if (vehView != null && element.material == Material.PLAYER_VEH || element.material == Material.ENEMY_VEH) {
             vehView.layoutParams.height = Material.ENEMY_VEH.height * CELL_SIZE
             vehView.layoutParams.width = Material.ENEMY_VEH.width * CELL_SIZE
 
             changeDirection(currentDirection)
-        }
     }
 
     fun movePlayer() {
@@ -43,12 +46,12 @@ class Veh(
         Thread {
             while (true) {
                 if (MOVE_VEH) {
-                    sleep(250)
-                    if (MOVE_VEH) {
+                    if (!this.enemyDrawer.gameCore.isSeparating()) {
                         container.runOnUiThread {
                             changeVehPosition()
                         }
                     }
+                    sleep(150)
                 }
 
             }
@@ -57,7 +60,7 @@ class Veh(
 
     fun moveEnemy() {
         init()
-        generateRandomDirectionForEnemy()
+        generateRandomDirection()
         container.runOnUiThread {
             changeVehPosition()
         }
@@ -68,11 +71,10 @@ class Veh(
         return random < percent
     }
 
-    private fun generateRandomDirectionForEnemy() {
-        if (element.material == Material.ENEMY_VEH) {
-            if (isChanсeBiggerThanPercent(5))
-                changeEnemyDirectionIfCantMove()
-        }
+    private fun generateRandomDirection() {
+        if (isChanсeBiggerThanPercent(5))
+            changeEnemyDirectionIfCantMove()
+
     }
 
     private fun changeEnemyDirectionIfCantMove() {
@@ -103,7 +105,7 @@ class Veh(
                 viewMoving(container)
                 element.coord = newCoord
         } else {
-            if (element.material == Material.ENEMY_VEH)
+            if (element.material == Material.ENEMY_VEH || element.material == Material.PLAYER_VEH && enemyDrawer.gameCore.isSeparating())
                 changeEnemyDirectionIfCantMove()
             lParams.topMargin = currentCoord.top
             lParams.leftMargin = currentCoord.left
@@ -130,6 +132,23 @@ class Veh(
             lParams.topMargin += length
 
         return Coordinate(lParams.topMargin, lParams.leftMargin)
+    }
+
+    private fun checkPlayerWontBeKilledOnNextCoord(coord: Coordinate): Boolean {
+        when (currentDirection) {
+            Direction.UP -> {
+                
+            }
+            Direction.BOTTOM -> {
+
+            }
+            Direction.RIGHT -> {
+
+            }
+            Direction.LEFT -> {
+
+            }
+        }
     }
 
     private fun checkVehCanMoveThrowBorder(): Boolean {

@@ -1,4 +1,4 @@
-package com.template.game
+package com.template.game.swipeListener
 
 import android.content.Context
 import android.util.Log

@@ -4,7 +4,7 @@
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000">
+    android:background="@color/field_bcg">
 
     <FrameLayout
         android:id="@+id/container"
@@ -78,13 +78,13 @@
             android:onClick="btnMaterialOnClick"
             android:src="@drawable/grass" />
 
-        <ImageView
+       <!-- <ImageView
             android:id="@+id/btn_base"
             android:layout_width="@dimen/btn_size"
             android:layout_height="@dimen/btn_size"
             android:layout_margin="2dp"
             android:onClick="btnMaterialOnClick"
-            android:src="@drawable/base" />
+            android:src="@drawable/base" />-->
 
     </LinearLayout>
 
@@ -100,13 +100,6 @@
         tools:visibility="visible">
 
         <ImageView
-            android:id="@+id/anotherBtn"
-            android:layout_width="@dimen/btn_size"
-            android:layout_height="@dimen/btn_size"
-            android:layout_margin="2dp"
-            android:src="@drawable/brick" />
-
-        <ImageView
             android:id="@+id/btn_save"
             android:layout_width="@dimen/btn_size"
             android:layout_height="@dimen/btn_size"
@@ -114,6 +107,15 @@
             android:alpha="0.5"
             android:onClick="saveBtnOnClick"
             android:src="@drawable/ic_save" />
+
+        <ImageView
+            android:id="@+id/btn_restart"
+            android:layout_width="@dimen/btn_size"
+            android:layout_height="@dimen/btn_size"
+            android:layout_margin="2dp"
+            android:alpha="0.5"
+            android:onClick="restartBtnOnClick"
+            android:src="@mipmap/ic_restart" />
 
     </LinearLayout>
 
@@ -124,14 +126,12 @@
         android:layout_height="match_parent" />
 
     <TextView
-        android:id="@+id/tvGameOver"
+        android:id="@+id/tvEndGame"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="64sp"
         android:textStyle="bold"
         android:visibility="gone"
-        android:textColor="#FF0000"
-        android:text="@string/game_over"
         android:gravity="center"
         android:layout_gravity="center"/>
 

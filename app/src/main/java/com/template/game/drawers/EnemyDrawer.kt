@@ -3,6 +3,7 @@ package com.template.game.drawers
 import android.widget.FrameLayout
 import com.template.game.CELL_SIZE
 import com.template.game.GameCore
+import com.template.game.MAX_ENEMY_AMOUNT
 import com.template.game.MAX_FIELD_WIDTH
 import com.template.game.sounds.SoundPlayer
 import com.template.game.enums.Direction
@@ -10,9 +11,12 @@ import com.template.game.enums.Material
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
 import com.template.game.utils.drawElement
-import com.template.game.vehicals.Veh
-
-const val MAX_ENEMY_AMOUNT = 5
+import com.template.game.vehs.BigTank
+import com.template.game.vehs.OldTank
+import com.template.game.vehs.RealTank
+import com.template.game.vehs.Veh
+import kotlin.math.abs
+import kotlin.random.Random
 
 class EnemyDrawer(
         val container: FrameLayout,
@@ -24,6 +28,7 @@ class EnemyDrawer(
     val allEnemys = mutableListOf<Veh>()
     private var currentCoord: Coordinate
     private var enemyAmount = 0
+    private var deadEnemyAmount = 0
     private var gameStarted = false
 
     lateinit var bulletDrawer: BulletDrawer
@@ -51,10 +56,17 @@ class EnemyDrawer(
                 if (!gameCore.isPlaying()) continue
                 drawEnemy()
                 enemyAmount++
-                Thread.sleep(5000)
+                if (enemyAmount % 3 == 0)
+                    Thread.sleep(10000)
+                else
+                    Thread.sleep(5000)
             }
         }.start()
         moveEnemyVeh()
+    }
+
+    fun makePlayerVehAlive(player: Veh) {
+        allEnemys.add(player)
     }
 
     private fun drawEnemy() {
@@ -66,15 +78,43 @@ class EnemyDrawer(
         )
         enemyElement.drawElement(container)
 
-        //    while ( container.findViewById<View>(enemyElement.viewId) == null ) {}
-        val enemyVeh = Veh(
-                container,
-                enemyElement,
-                Direction.BOTTOM,
-                elements,
-                this
-        )
+        val enemyVeh = getRandEnemy(enemyElement)
+
         allEnemys.add(enemyVeh)
+    }
+
+    private fun getRandEnemy(enemyElement: Element): Veh {
+        lateinit var enemyVeh: Veh
+
+        val rand = Random.nextInt(100)
+        if (rand % 3 == 0) {
+            enemyVeh = OldTank(
+                    container,
+                    enemyElement,
+                    Direction.BOTTOM,
+                    elements,
+                    this
+            )
+        }
+        if (rand % 3 == 1) {
+            enemyVeh = RealTank(
+                    container,
+                    enemyElement,
+                    Direction.BOTTOM,
+                    elements,
+                    this
+            )
+        }
+        if (rand % 3 == 2) {
+            enemyVeh = BigTank(
+                    container,
+                    enemyElement,
+                    Direction.BOTTOM,
+                    elements,
+                    this
+            )
+        }
+        return enemyVeh
     }
 
     private fun moveEnemyVeh() {
@@ -94,8 +134,13 @@ class EnemyDrawer(
             soundPlayer.vehStop()
         allEnemys.toList().forEach {
             it.moveEnemy()
-            if (isEnemySeePlayer(it) || it.isChanсeBiggerThanPercent(10))
-                bulletDrawer.addNewBulletForVeh(it)
+            if (it.element.material == Material.PLAYER_VEH) {
+                if (isPlayerSeeEnemy(it) || it.isChanсeBiggerThanPercent(10))
+                    bulletDrawer.addNewBulletForVeh(it)
+            } else {
+                if (isEnemySeePlayer(it) || it.isChanсeBiggerThanPercent(10))
+                    bulletDrawer.addNewBulletForVeh(it)
+            }
         }
     }
 
@@ -106,22 +151,51 @@ class EnemyDrawer(
             when (enemy.currentDirection) {
                 Direction.UP -> {
                     if (playerElement.coord.top < enemy.element.coord.top &&
-                            playerElement.coord.left == enemy.element.coord.left)
+                            abs(playerElement.coord.left - enemy.element.coord.left) < CELL_SIZE * 2)
                         return true
                 }
                 Direction.BOTTOM -> {
                     if (playerElement.coord.top > enemy.element.coord.top &&
-                            playerElement.coord.left == enemy.element.coord.left)
+                            abs(playerElement.coord.left - enemy.element.coord.left) < CELL_SIZE * 2)
                         return true
                 }
                 Direction.LEFT -> {
-                    if (playerElement.coord.top == enemy.element.coord.top &&
+                    if (abs(playerElement.coord.top - enemy.element.coord.top) < CELL_SIZE * 2 &&
                             playerElement.coord.left < enemy.element.coord.left)
                         return true
                 }
                 Direction.RIGHT -> {
-                    if (playerElement.coord.top == enemy.element.coord.top &&
+                    if (abs(playerElement.coord.top - enemy.element.coord.top) < CELL_SIZE * 2 &&
                             playerElement.coord.left > enemy.element.coord.left)
+                        return true
+                }
+            }
+        }
+        return false
+    }
+
+    private fun isPlayerSeeEnemy(player: Veh): Boolean {
+        for (enemyElement in allEnemys.map { it.element }.filter { it.material == Material.ENEMY_VEH }) {
+
+            when (player.currentDirection) {
+                Direction.UP -> {
+                    if (enemyElement.coord.top < player.element.coord.top &&
+                            abs(enemyElement.coord.left - player.element.coord.left) < CELL_SIZE * 2)
+                        return true
+                }
+                Direction.BOTTOM -> {
+                    if (enemyElement.coord.top > player.element.coord.top &&
+                            abs(enemyElement.coord.left - player.element.coord.left) < CELL_SIZE * 2)
+                        return true
+                }
+                Direction.LEFT -> {
+                    if (abs(enemyElement.coord.top - player.element.coord.top) < CELL_SIZE * 2 &&
+                            enemyElement.coord.left < player.element.coord.left)
+                        return true
+                }
+                Direction.RIGHT -> {
+                    if (abs(enemyElement.coord.top - player.element.coord.top) < CELL_SIZE * 2 &&
+                            enemyElement.coord.left > player.element.coord.left)
                         return true
                 }
             }
@@ -132,6 +206,12 @@ class EnemyDrawer(
     fun removeVeh(vehIndex: Int) {
         if (vehIndex < 0) return
         soundPlayer.bulletBurst()
+
+        if (allEnemys[vehIndex].element.material == Material.ENEMY_VEH) {
+            deadEnemyAmount++
+            if (deadEnemyAmount == MAX_ENEMY_AMOUNT)
+                gameCore.playerWon()
+        }
         allEnemys.removeAt(vehIndex)
     }
 }

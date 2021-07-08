@@ -1,19 +1,23 @@
 package com.template.game
 
+import android.content.Intent
 import android.graphics.Point
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.template.game.drawers.*
 import com.template.game.enums.Direction
 import com.template.game.enums.Material
+import com.template.game.lvlSaver.LvlSaver
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
 import com.template.game.sounds.SoundPlayer
-import com.template.game.vehicals.Veh
+import com.template.game.vehs.Veh
+import com.template.game.swipeListener.OnSwipeListener
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_main_menu.*
 import kotlinx.coroutines.*
@@ -26,8 +30,9 @@ var MAX_HORIZONTAL_CELLS_AMOUNT = 14
 var MAX_FIELD_HEIGHT = 0
 var MAX_FIELD_WIDTH = 0
 
+var MAX_ENEMY_AMOUNT = 1
+
 class MainActivity : AppCompatActivity() {
- //   private var editMode = false
 
     private val player by lazy {
         Veh(
@@ -85,16 +90,25 @@ class MainActivity : AppCompatActivity() {
         elementDrawer.drawElemensOnStart(lvlSaver.loadLvl())
 
         startGameProcess()
+    }
 
-        val playerVehView = container.findViewById<View>(player.element.viewId)
+    private fun setOnClickOnPlayer(playerVehView: View) {
+        val imageList = listOf(
+                R.drawable.medium_tank,
+                R.drawable.big_tank,
+                R.drawable.real_tank,
+                R.drawable.old_tank,)
+        var currentImg = 0
+        (playerVehView as ImageView).setImageResource(imageList[currentImg])
+        playerVehView.background = this.getDrawable(imageList[currentImg])
 
         playerVehView.setOnClickListener {
-            val lParams = playerVehView.layoutParams as FrameLayout.LayoutParams
-            Toast.makeText(this,
-                    "${playerVehView.width} --- ${playerVehView.height}\n${Material.PLAYER_VEH.width} --- ${Material.PLAYER_VEH.height}",
-                    Toast.LENGTH_SHORT).show()
-        }
+            currentImg++
+            if (currentImg >= imageList.size) currentImg = 0
+            playerVehView.setImageResource(imageList[currentImg])
+            playerVehView.background = this.getDrawable(imageList[currentImg])
 
+        }
     }
 
     override fun onPause() {
@@ -105,8 +119,16 @@ class MainActivity : AppCompatActivity() {
     private fun startGameProcess() {
         soundPlayer.playIntro()
 
+        if (gameCore.isSeparating())
+            enemyDrawer.makePlayerVehAlive(player)
+        else
+            startPlaying()
+    }
+
+    private fun startPlaying() {
         elementDrawer.drawElemensOnStart(listOf(player.element))
         val playerVehView = container.findViewById<View>(player.element.viewId)
+        setOnClickOnPlayer(playerVehView)
 
         playerVehView.layoutParams.width = Material.PLAYER_VEH.width * CELL_SIZE
         playerVehView.layoutParams.height = Material.PLAYER_VEH.height * CELL_SIZE
@@ -139,12 +161,16 @@ class MainActivity : AppCompatActivity() {
         }
         btnSeparating.setOnClickListener {
             btnMenu.visibility = View.VISIBLE
+            gameCore.starSeparate()
+            startGameProcess()
+            continueGame()
             menuFragment.view?.visibility = View.GONE
         }
         btnRules.setOnClickListener {
+            startActivity(Intent(this, RulesActivity::class.java))
         }
         btnExit.setOnClickListener {
-            this.finish()
+            finish()
         }
     }
 
@@ -168,6 +194,14 @@ class MainActivity : AppCompatActivity() {
     private fun onTouchListenerInEditMode() {
         container.setOnTouchListener { _, event ->
             elementDrawer.onTouchContainer(event.x, event.y)
+            return@setOnTouchListener true
+        }
+
+    }
+
+    private fun noOnTouchListener() {
+        container.setOnTouchListener { _, _ ->
+            Toast.makeText(this, "Just watch!", Toast.LENGTH_SHORT).show()
             return@setOnTouchListener true
         }
 
@@ -228,7 +262,10 @@ class MainActivity : AppCompatActivity() {
             btnMenu.background = ContextCompat.getDrawable(this, R.mipmap.ic_menu)
             materials_container.visibility = View.GONE
             game_btns_container.visibility = View.GONE
-            onTouchListenerNoInEditMode()
+            if (gameCore.isSeparating())
+                noOnTouchListener()
+            else
+                onTouchListenerNoInEditMode()
         } else {
             gridDrawer.drawGrid()
             btnMenu.background = ContextCompat.getDrawable(this, R.drawable.ic_play)
@@ -250,9 +287,6 @@ class MainActivity : AppCompatActivity() {
             R.id.btn_brick -> {
                 elementDrawer.currentMaterial = Material.BRICK
             }
-            R.id.btn_base -> {
-                elementDrawer.currentMaterial = Material.BASE
-            }
             R.id.btn_clear -> {
                 elementDrawer.currentMaterial = Material.EMPTY
             }
@@ -266,6 +300,10 @@ class MainActivity : AppCompatActivity() {
     fun saveBtnOnClick(view: View) {
         lvlSaver.saveLvl(elementDrawer.elements)
         Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show()
+    }
+
+    fun restartBtnOnClick(view: View) {
+        recreate()
     }
 
     override fun onDestroy() {

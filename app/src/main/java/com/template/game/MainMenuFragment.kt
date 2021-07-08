@@ -5,6 +5,8 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.SeekBar
+import kotlinx.android.synthetic.main.fragment_main_menu.*
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -31,8 +33,30 @@ class MainMenuFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
+        val buf = inflater.inflate(R.layout.fragment_main_menu, container, false)
 
-        return inflater.inflate(R.layout.fragment_main_menu, container, false)
+        val sBar = buf.findViewById<SeekBar>(R.id.enemyAmountSeekBar)
+        sBar.progress = 1
+        sBar.max = 30
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            sBar.min = 1
+        }
+        sBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (sBar.progress < 1) sBar.progress = 10 //for small API
+                MAX_ENEMY_AMOUNT = sBar.progress
+                val text = "Enemy amount: ${sBar.progress}"
+                enemyAmountTextView.text = text
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {
+            }
+        })
+
+        return buf
     }
 
     companion object {

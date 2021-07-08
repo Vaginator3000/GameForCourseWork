@@ -12,7 +12,7 @@ import com.template.game.models.Coordinate
 import com.template.game.models.Element
 import com.template.game.sounds.SoundPlayer
 import com.template.game.utils.*
-import com.template.game.vehicals.Veh
+import com.template.game.vehs.Veh
 import java.lang.Thread.sleep
 import kotlin.math.abs
 
@@ -45,8 +45,8 @@ class BulletDrawer(
 
     private fun interactWithBullets() {
         allBullets.toList().forEach { bullet ->
-            val view = bullet.view
-            val lParams = view.layoutParams as FrameLayout.LayoutParams
+            val bulletView = bullet.view
+            val lParams = bulletView.layoutParams as FrameLayout.LayoutParams
             if (bullet.canBulletMoveNext()) {
                 when (bullet.direction) {
                     Direction.UP -> lParams.topMargin -= BULLET_HEIGHT
@@ -55,11 +55,11 @@ class BulletDrawer(
                     Direction.RIGHT -> lParams.leftMargin += BULLET_WIDTH
                 }
 
-                bulletActionOnElements (bullet)
+                bulletActionOnElements(bullet)
 
                 container.runOnUiThread {
-                    container.removeView(view)
-                    container.addView(view)
+                    container.removeView(bulletView)
+                    container.addView(bulletView)
                 }
             } else {
                 stopBullet(bullet)
@@ -89,7 +89,7 @@ class BulletDrawer(
             }
             val bulletCoord = bullet.view.getViewCurrentCoord()
 
-            if ( abs(bulletCoord.left - thisBulletCoord.left) < CELL_SIZE / 2 &&
+            if (abs(bulletCoord.left - thisBulletCoord.left) < CELL_SIZE / 2 &&
                     abs(bulletCoord.top - thisBulletCoord.top) < CELL_SIZE / 2) {
 
 
@@ -100,22 +100,23 @@ class BulletDrawer(
         }
     }
 
-    fun addNewBulletForVeh(veh:Veh) {
+    fun addNewBulletForVeh(veh: Veh) {
+        container.findViewById<View>(veh.element.viewId) ?: return
+
         soundPlayer.bulletShot()
 
-        val view = container.findViewById<View>(veh.element.viewId) ?: return
         if (veh.hasBullet()) return
-        allBullets.add( Bullet(createBullet(view, veh.currentDirection), veh.currentDirection, veh) )
+        allBullets.add(Bullet(createBullet(veh), veh.currentDirection, veh))
     }
 
-    fun Veh.hasBullet(): Boolean =
-            allBullets.firstOrNull { it.veh == this} != null
+    private fun Veh.hasBullet(): Boolean =
+            allBullets.firstOrNull { it.veh == this } != null
 
     private fun Bullet.canBulletMoveNext() = checkBulletCanMoveThrowBorder(this.view, this.view.getViewCurrentCoord()) && this.canMove
 
 
     private fun bulletActionOnElements(
-                                bullet: Bullet) {
+            bullet: Bullet) {
 
         compareElements(getCoordsForBulletDirection(bullet), bullet)
     }
@@ -135,7 +136,7 @@ class BulletDrawer(
     }
 
     private fun removeElementsAndDeleteBullet(elementToDelete: Element?, bullet: Bullet) {
-        if(elementToDelete != null) {
+        if (elementToDelete != null) {
             if (!elementToDelete.material.canBulletGoThrow)
                 stopBullet(bullet)
             if (bullet.veh.element.material == Material.ENEMY_VEH && elementToDelete.material == Material.ENEMY_VEH) {
@@ -165,7 +166,7 @@ class BulletDrawer(
     private fun removeView(elementToDelete: Element) {
         val activity = container.context as Activity
         val viewToDelete = activity.findViewById<View>(elementToDelete.viewId)
-        activity.runOnUiThread{
+        activity.runOnUiThread {
             container.removeView(viewToDelete)
         }
     }
@@ -175,36 +176,40 @@ class BulletDrawer(
         val bulletCoord = bullet.view.getViewCurrentCoord()
 
         if (currentDirection == Direction.RIGHT || currentDirection == Direction.LEFT) {
-            val topCell = bulletCoord.top - bulletCoord.top % CELL_SIZE
-            val bottomCell = topCell + CELL_SIZE
             val leftCoord = bulletCoord.left - bulletCoord.left % CELL_SIZE
-            return listOf(
-                    Coordinate(topCell, leftCoord),
-                    Coordinate(bottomCell, leftCoord) )
-        }
-        else {
-            val leftCell = bulletCoord.left - bulletCoord.left % CELL_SIZE
-            val rightCell = leftCell + CELL_SIZE
             val topCoord = bulletCoord.top - bulletCoord.top % CELL_SIZE
+            var bottomCoord = topCoord + CELL_SIZE
+            if (bullet.veh.element.material.width == 1)
+                bottomCoord = topCoord
             return listOf(
-                    Coordinate(topCoord, leftCell),
-                    Coordinate(topCoord, rightCell) )
+                    Coordinate(topCoord, leftCoord),
+                    Coordinate(bottomCoord, leftCoord))
+        } else {
+            val topCoord = bulletCoord.top - bulletCoord.top % CELL_SIZE
+            val leftCoord = bulletCoord.left - bulletCoord.left % CELL_SIZE
+            var rightCoord = leftCoord + CELL_SIZE
+            if (bullet.veh.element.material.width == 1)
+                rightCoord = leftCoord
+            return listOf(
+                    Coordinate(topCoord, leftCoord),
+                    Coordinate(topCoord, rightCoord))
         }
     }
 
-    private fun createBullet(veh: View, currentDirection: Direction)
-        = ImageView(container.context)
-                .apply {
-                    this.setImageResource(R.drawable.bullet)
-                    //--------------------------------------------------------------ПОМЕНЯТЬ ЗНАЧЕНИЯ РАЗМЕРА ПУЛИ ДЛЯ РАЗНЫХ ПУШЕК!!
-                    this.layoutParams = FrameLayout.LayoutParams(BULLET_WIDTH,BULLET_HEIGHT)
-                    val bulletCoord = getBulletCoord(this, veh, currentDirection)
-                    (this.layoutParams as FrameLayout.LayoutParams).topMargin = bulletCoord.top
-                    (this.layoutParams as FrameLayout.LayoutParams).leftMargin = bulletCoord.left
-                    this.rotation = currentDirection.rotation
+    private fun createBullet(veh: Veh): ImageView {
+        val currentDirection = veh.currentDirection
+        return ImageView(container.context)
+            .apply {
+                            this.setImageResource(R.drawable.bullet)
+                            //--------------------------------------------------------------ПОМЕНЯТЬ ЗНАЧЕНИЯ РАЗМЕРА ПУЛИ ДЛЯ РАЗНЫХ ПУШЕК!!
+                            this.layoutParams = FrameLayout.LayoutParams(BULLET_WIDTH, BULLET_HEIGHT)
+                            val bulletCoord = getBulletCoord(this, veh)
+                            (this.layoutParams as FrameLayout.LayoutParams).topMargin = bulletCoord.top
+                            (this.layoutParams as FrameLayout.LayoutParams).leftMargin = bulletCoord.left
+                            this.rotation = currentDirection.rotation
 
-                }
-
+            }
+    }
 
 
     private fun checkBulletCanMoveThrowBorder(bullet: View, coord: Coordinate): Boolean {
@@ -220,34 +225,37 @@ class BulletDrawer(
 
     private fun getBulletCoord(
             bullet: ImageView,
-            veh: View,
-            currentDirection: Direction
+            veh: Veh
     ): Coordinate {
-        val vehCoord = Coordinate(veh.top, veh.left)
+        val vehView = container.findViewById<View>(veh.element.viewId)
+        val currentDirection = veh.currentDirection
+        val vehCoord = Coordinate(vehView.top, vehView.left)
         return when(currentDirection) {
             Direction.RIGHT -> {
                 Coordinate (
-                        top = getDistanceToMiddleOfVeh(vehCoord.top, bullet.layoutParams.height),
-                        left = veh.left + veh.layoutParams.width)
+                        top = getDistanceToMiddleOfVeh(veh, vehCoord.top, bullet.layoutParams.height),
+                        left = vehView.left + vehView.layoutParams.width)
             }
             Direction.LEFT -> {
                 Coordinate (
-                        top = getDistanceToMiddleOfVeh(veh.top, bullet.layoutParams.height),
-                        left = veh.left - bullet.layoutParams.width)
+                        top = getDistanceToMiddleOfVeh(veh, vehView.top, bullet.layoutParams.height),
+                        left = vehView.left - bullet.layoutParams.width)
             }
             Direction.UP -> {
                 Coordinate (
-                        top = veh.top - bullet.layoutParams.height,
-                        left = getDistanceToMiddleOfVeh(veh.left, bullet.layoutParams.width))
+                        top = vehView.top - bullet.layoutParams.height,
+                        left = getDistanceToMiddleOfVeh(veh, vehView.left, bullet.layoutParams.width))
             }
             Direction.BOTTOM -> {
                 Coordinate (
-                        top = veh.top + veh.layoutParams.height,
-                        left = getDistanceToMiddleOfVeh(veh.left, bullet.layoutParams.width))
+                        top = vehView.top + vehView.layoutParams.height,
+                        left = getDistanceToMiddleOfVeh(veh, vehView.left, bullet.layoutParams.width))
             }
         }
     }
 
-    private fun getDistanceToMiddleOfVeh(vehCoord: Int, bulletSize: Int): Int
-        = vehCoord + (CELL_SIZE - bulletSize / 2)
+    private fun getDistanceToMiddleOfVeh(veh: Veh, vehCoord: Int, bulletSize: Int): Int {
+        val indent = if (veh.element.width == 1) CELL_SIZE / 2 else CELL_SIZE
+        return vehCoord + (indent - bulletSize / 2)
+    }
 }

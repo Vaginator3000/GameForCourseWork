@@ -1,15 +1,13 @@
 package com.template.game.utils
 
 import android.app.Activity
-import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.Toast
 import com.template.game.CELL_SIZE
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
-import com.template.game.vehicals.Veh
+import com.template.game.vehs.Veh
 
 
 fun getElementByCoord(coord: Coordinate, elements: List<Element>): Element? {
@@ -27,13 +25,13 @@ fun getElementByCoord(coord: Coordinate, elements: List<Element>): Element? {
     return null
 }
 
+fun getVehByCoord(coord: Coordinate, enemyVehs: MutableList<Veh>): Element? {
+    return getElementByCoord(coord, enemyVehs.map { it.element })
+}
+
 fun View.getViewCurrentCoord(): Coordinate {
     val lParams = this.layoutParams as FrameLayout.LayoutParams
     return Coordinate(lParams.topMargin, lParams.leftMargin)
-}
-
-fun getVehByCoord(coord: Coordinate, enemyVehs: MutableList<Veh>): Element? {
-    return getElementByCoord(coord, enemyVehs.map { it.element })
 }
 
 fun Element.drawElement(container: FrameLayout) {

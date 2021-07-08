@@ -13,9 +13,9 @@ enum class Material(val canVehGoThrow: Boolean,
                     val canBulletGoThrow: Boolean,
                     val canSmallBulletDestroy: Boolean,
                     internal val amountElementsOnScreen: Int,
-                    val width: Int,
-                    val height: Int,
-                    val image: Int?) {
+                    var width: Int,
+                    var height: Int,
+                    var image: Int?) {
 
     EMPTY (
         canVehGoThrow = true,
