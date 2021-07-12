@@ -1,17 +1,14 @@
 package com.template.game.drawers
 
-import android.app.Activity
-import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.ImageView
 import com.template.game.CELL_SIZE
 import com.template.game.enums.Material
 import com.template.game.models.Coordinate
 import com.template.game.models.Element
 import com.template.game.utils.*
 
-class ElementDrawer(val container: FrameLayout) {
+class ElementDrawer (val container: FrameLayout)  {
     var currentMaterial = Material.EMPTY
     var elements = mutableListOf<Element>()
 
@@ -37,7 +34,7 @@ class ElementDrawer(val container: FrameLayout) {
     private fun drawOrReplaceView(coord: Coordinate) {
         val viewOnCoord = getElementByCoord(coord, elements)
         if (viewOnCoord == null)
-            createAndDrowElement(coord)
+            createAndDrawElement(coord)
         else
             replaceView(coord)
     }
@@ -68,7 +65,7 @@ class ElementDrawer(val container: FrameLayout) {
 
     private fun replaceView(coord: Coordinate) {
         delView(coord)
-        createAndDrowElement(coord)
+        createAndDrawElement(coord)
     }
 
     private fun delView(coord: Coordinate) {
@@ -94,7 +91,7 @@ class ElementDrawer(val container: FrameLayout) {
 
     }
 
-    private fun createAndDrowElement(coord: Coordinate) {
+    private fun createAndDrawElement(coord: Coordinate) {
         val newElement = Element(
                 material = currentMaterial,
                 coord = coord

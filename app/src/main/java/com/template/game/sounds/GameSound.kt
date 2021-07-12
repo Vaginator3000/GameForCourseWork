@@ -20,8 +20,7 @@ class GameSound(
         else {
             isStarted = true
             resourceInPool = pool.play(resourceInPool, 1f, 1f, 1, isLoop, 1f)
-            Log.d("MyLog", pool.toString())
-            Log.d("MyLog", resourceInPool.toString())
+
         }
     }
 

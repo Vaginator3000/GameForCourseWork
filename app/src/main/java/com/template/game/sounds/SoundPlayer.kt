@@ -13,7 +13,6 @@ class SoundPlayer(val context: Context) {
 
     private val sounds = mutableListOf<GameSound>()
     private val soundPool = SoundPoolFactory().createSoundPool()
-//    private val vehMovePlayerSecond = MediaPlayer.create(context, R.raw.veh_move)
 
     fun loadSounds() {
         sounds.add(INTRO_MUSIC_INDEX, GameSound(
@@ -58,7 +57,7 @@ class SoundPlayer(val context: Context) {
         sounds[VEH_MOVE_INDEX].pause()
     }
 
-    fun pauseSound(i: Int) {
+    private fun pauseSound(i: Int) {
         sounds[i].pause()
     }
 
@@ -67,7 +66,7 @@ class SoundPlayer(val context: Context) {
             pauseSound(i)
     }
 
-    fun stopSound(i: Int) {
+    private fun stopSound(i: Int) {
         sounds[i].stop()
     }
 

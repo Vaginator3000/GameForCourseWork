@@ -16,7 +16,7 @@ import com.template.game.vehs.Veh
 import java.lang.Thread.sleep
 import kotlin.math.abs
 
-class BulletDrawer(
+class BulletDrawer (
         val container: FrameLayout,
         val elements: MutableList<Element>,
         val enemyDrawer: EnemyDrawer,
@@ -84,9 +84,9 @@ class BulletDrawer(
     private fun Bullet.stopIntersectingBullets() {
         val thisBulletCoord = this.view.getViewCurrentCoord()
         for (bullet in allBullets) {
-            if (bullet == this) {
+            if (bullet == this)
                 continue
-            }
+
             val bulletCoord = bullet.view.getViewCurrentCoord()
 
             if (abs(bulletCoord.left - thisBulletCoord.left) < CELL_SIZE / 2 &&

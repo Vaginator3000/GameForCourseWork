@@ -5,7 +5,7 @@ import android.media.SoundPool
 import android.os.Build
 
 class SoundPoolFactory {
-    private val maxStreamsAmounr = 6
+    private val maxStreamsAmounr = 7
 
     fun createSoundPool(): SoundPool {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

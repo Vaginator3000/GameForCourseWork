@@ -1,14 +1,8 @@
 package com.template.game.vehs
 
-import android.util.Log
-import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.ImageView
-import com.template.game.CELL_SIZE
-import com.template.game.MAX_FIELD_HEIGHT
-import com.template.game.MAX_FIELD_WIDTH
-import com.template.game.R
+import com.template.game.*
 import com.template.game.drawers.EnemyDrawer
 import com.template.game.enums.Direction
 import com.template.game.enums.Material
@@ -24,11 +18,11 @@ open class Veh(
         val element: Element,
         direction: Direction,
         elementsOnContainer: MutableList<Element>,
-        val enemyDrawer: EnemyDrawer) {
+        private val enemyDrawer: EnemyDrawer) {
 
     var MOVE_VEH = false
 
-    val elements = elementsOnContainer
+    private val elements = elementsOnContainer
     var currentDirection = direction
     lateinit var vehView: View
 
@@ -37,7 +31,7 @@ open class Veh(
             vehView.layoutParams.height = Material.ENEMY_VEH.height * CELL_SIZE
             vehView.layoutParams.width = Material.ENEMY_VEH.width * CELL_SIZE
 
-            changeDirection(currentDirection)
+            changeDirectionTo(currentDirection)
     }
 
     fun movePlayer() {
@@ -51,7 +45,7 @@ open class Veh(
                             changeVehPosition()
                         }
                     }
-                    sleep(150)
+                    sleep(PLAYER_MOVE_PAUSE)
                 }
 
             }
@@ -67,21 +61,20 @@ open class Veh(
     }
 
     fun isChanсeBiggerThanPercent(percent: Int): Boolean {
-        val random = Random.nextInt(100)
-        return random < percent
+        return Random.nextInt(100) < percent
     }
 
     private fun generateRandomDirection() {
         if (isChanсeBiggerThanPercent(5))
-            changeEnemyDirectionIfCantMove()
+            changeDirectionIfCantMove()
 
     }
 
-    private fun changeEnemyDirectionIfCantMove() {
-        changeDirection(Direction.values()[Random.nextInt(Direction.values().size)])
+    private fun changeDirectionIfCantMove() {
+        changeDirectionTo(Direction.values()[Random.nextInt(Direction.values().size)])
     }
 
-    fun changeDirection(direction: Direction) {
+    fun changeDirectionTo(direction: Direction) {
         container.runOnUiThread {
             when (direction) {
                 Direction.UP -> vehView.rotation = 0f
@@ -101,14 +94,28 @@ open class Veh(
         val currentCoord = vehView.getViewCurrentCoord()
         val newCoord = getNextVehCoord()
 
-        if (checkVehCanMoveThrowBorder() && element.checkVehCanMoveThrowElement(newCoord)) {
+        if (enemyDrawer.gameCore.isSeparating()) {
+            if (element.material == Material.ENEMY_VEH && checkVehCanMoveThrowBorder() && element.checkVehCanMoveThrowElement(newCoord) ||
+                    element.material == Material.PLAYER_VEH && checkPlayerWontBeKilledOnNextCoord(newCoord, currentCoord) && checkVehCanMoveThrowBorder() && element.checkVehCanMoveThrowElement(newCoord)    ) {
                 viewMoving(container)
                 element.coord = newCoord
-        } else {
-            if (element.material == Material.ENEMY_VEH || element.material == Material.PLAYER_VEH && enemyDrawer.gameCore.isSeparating())
-                changeEnemyDirectionIfCantMove()
-            lParams.topMargin = currentCoord.top
-            lParams.leftMargin = currentCoord.left
+            } else {
+                changeDirectionIfCantMove()
+                lParams.topMargin = currentCoord.top
+                lParams.leftMargin = currentCoord.left
+            }
+        }
+        else {
+            if (checkVehCanMoveThrowBorder() && element.checkVehCanMoveThrowElement(newCoord)) {
+                viewMoving(container)
+                element.coord = newCoord
+            } else {
+                if (element.material == Material.ENEMY_VEH)
+                    changeDirectionIfCantMove()
+                lParams.topMargin = currentCoord.top
+                lParams.leftMargin = currentCoord.left
+            }
+
         }
     }
 
@@ -134,21 +141,34 @@ open class Veh(
         return Coordinate(lParams.topMargin, lParams.leftMargin)
     }
 
-    private fun checkPlayerWontBeKilledOnNextCoord(coord: Coordinate): Boolean {
-        when (currentDirection) {
-            Direction.UP -> {
-                
-            }
-            Direction.BOTTOM -> {
-
-            }
-            Direction.RIGHT -> {
-
-            }
-            Direction.LEFT -> {
-
+    private fun checkPlayerWontBeKilledOnNextCoord(nextCoord: Coordinate, currentCoord: Coordinate): Boolean {
+        for (x in 0..MAX_FIELD_WIDTH) {
+            val enemyElement = getVehByCoord(Coordinate(nextCoord.top, x), enemyDrawer.allEnemys)
+            if (enemyElement != null) {
+                if (enemyElement.coord == nextCoord || enemyElement.coord == currentCoord) continue
+                val enemyVeh = getVehByElement(enemyElement)
+                if (enemyVeh.element.coord.left > nextCoord.left && enemyVeh.currentDirection == Direction.LEFT)
+                    return false
+                if (enemyVeh.element.coord.left < nextCoord.left && enemyVeh.currentDirection == Direction.RIGHT)
+                    return false
             }
         }
+        for (y in 0..MAX_FIELD_HEIGHT) {
+            val enemyElement = getVehByCoord(Coordinate(y, nextCoord.left), enemyDrawer.allEnemys)
+            if (enemyElement != null) {
+                if (enemyElement.coord == nextCoord || enemyElement.coord == currentCoord) continue
+                val enemyVeh = getVehByElement(enemyElement)
+                if (enemyVeh.element.coord.top > nextCoord.top && enemyVeh.currentDirection == Direction.UP)
+                    return false
+                if (enemyVeh.element.coord.top < nextCoord.top && enemyVeh.currentDirection == Direction.BOTTOM)
+                    return false
+            }
+        }
+        return true
+    }
+
+    private fun getVehByElement(enemyElement: Element): Veh {
+        return enemyDrawer.allEnemys.firstOrNull { it.element == enemyElement }!!
     }
 
     private fun checkVehCanMoveThrowBorder(): Boolean {

@@ -2,7 +2,6 @@ package com.template.game
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-
 class RulesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -4,7 +4,6 @@ import android.content.Intent
 import android.graphics.Point
 import android.os.Bundle
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -29,6 +28,7 @@ var MAX_VERTICAL_CELLS_AMOUNT = 24
 var MAX_HORIZONTAL_CELLS_AMOUNT = 14
 var MAX_FIELD_HEIGHT = 0
 var MAX_FIELD_WIDTH = 0
+var PLAYER_MOVE_PAUSE: Long = 150
 
 var MAX_ENEMY_AMOUNT = 1
 
@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun setValues() {
+    private fun setValues() {
         soundPlayer.loadSounds()
 
         val display = windowManager.defaultDisplay
@@ -211,22 +211,22 @@ class MainActivity : AppCompatActivity() {
         container.setOnTouchListener(object : OnSwipeListener(this@MainActivity) {
             override fun onSwipeLeft() {
                 super.onSwipeLeft()
-                player.changeDirection(Direction.LEFT)
+                player.changeDirectionTo(Direction.LEFT)
             }
 
             override fun onSwipeRight() {
                 super.onSwipeRight()
-                player.changeDirection(Direction.RIGHT)
+                player.changeDirectionTo(Direction.RIGHT)
             }
 
             override fun onSwipeUp() {
                 super.onSwipeUp()
-                player.changeDirection(Direction.UP)
+                player.changeDirectionTo(Direction.UP)
             }
 
             override fun onSwipeDown() {
                 super.onSwipeDown()
-                player.changeDirection(Direction.BOTTOM)
+                player.changeDirectionTo(Direction.BOTTOM)
             }
 
             override fun onLongClick() {

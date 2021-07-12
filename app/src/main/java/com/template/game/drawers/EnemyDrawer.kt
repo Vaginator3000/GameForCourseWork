@@ -1,10 +1,7 @@
 package com.template.game.drawers
 
 import android.widget.FrameLayout
-import com.template.game.CELL_SIZE
-import com.template.game.GameCore
-import com.template.game.MAX_ENEMY_AMOUNT
-import com.template.game.MAX_FIELD_WIDTH
+import com.template.game.*
 import com.template.game.sounds.SoundPlayer
 import com.template.game.enums.Direction
 import com.template.game.enums.Material
@@ -121,7 +118,7 @@ class EnemyDrawer(
         Thread {
             while (true) {
                 if (!gameCore.isPlaying()) continue
-                Thread.sleep(200)
+                Thread.sleep(PLAYER_MOVE_PAUSE + 100)
                 goThrowAllVehs()
             }
         }.start()
